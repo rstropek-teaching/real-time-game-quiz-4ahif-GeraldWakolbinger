@@ -1,14 +1,27 @@
+
+let game = new Phaser.Game(450, 450, Phaser.AUTO, document.getElementById('gameDiv'));
+
+
 var Game = function (game: any) {
 
 };
-
+console.log("before prototype");
 Game.prototype = {
 
-	create: function () {
-
+	preload: function(){
 		let me = this;
-		me.game.physics.startSystem(Phaser.Physics.ARCADE);
+		console.log("loading images...");
+		me.game.load.image('dragon', '/dragon.png');
+		me.game.load.image('kraken', '/kraken.png');
+		me.game.load.image('godzilla', '/godzilla.png');
+		me.game.load.image('alien', '/alien.png');
+	},
+	create: function () {
+		console.log("in create");
+		let me = this;
+		game.physics.startSystem(Phaser.Physics.ARCADE);
 		me.game.stage.backgroundColor = "34495f";
+				
 
 		me.tileTypes = ['dragon', 'kraken', 'godzilla', 'alien'];
 		me.score = 0;
@@ -20,23 +33,26 @@ Game.prototype = {
 		me.tiles = me.game.add.group();
 
 		me.tileGrid = [
-			[null, null, null, null, null, null],
-			[null, null, null, null, null, null],
-			[null, null, null, null, null, null],
-			[null, null, null, null, null, null],
-			[null, null, null, null, null, null],
-			[null, null, null, null, null, null]
+			[null, null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null, null],
+			[null, null, null, null, null, null, null, null, null]
+
 
 		];
-
 		let seed = Date.now();
 		me.random = new Phaser.RandomDataGenerator([seed]);
+		console.log("create finished");
 		me.initTiles();
 	},
 
 	update: function () {
 		let me = this;
-
 		if (me.activeTile1 && !me.activeTile2) {
 			let hoverX: number = me.game.input.x;
 			let hoverY: number = me.game.input.y;
@@ -54,9 +70,14 @@ Game.prototype = {
 					me.canMove = false;
 					me.activeTile2 = me.tileGrid[hoverPosX][hoverPosY];
 					me.swapTiles();
+					
 					me.game.time.events.add(500, function(){
 						me.checkMatch();
 					});
+					me.game.time.events.add(10000, function(){
+						Client.tilesSwapped(me.tileGrid);
+					})
+					
 				}
 			}
 		}
@@ -82,6 +103,17 @@ Game.prototype = {
 	addTile: function (x: number, y: number) {
 		let me = this;
 		let tileToAdd = me.tileTypes[me.random.integerInRange(0, me.tileTypes.length - 1)];
+		let tile = me.tiles.create((x * me.tileWidth) + me.tileWidth / 2, 0, tileToAdd);
+		me.game.add.tween(tile).to({ y: y * me.tileHeight + (me.tileHeight / 2) }, 500, Phaser.Easing.Linear.In, true)
+		tile.anchor.setTo(0.5, 0.5);
+		tile.inputEnabled = true;
+		tile.tileType = tileToAdd;
+		tile.events.onInputDown.add(me.tileDown, me);
+		return tile;
+	},
+	addTileByName: function (x: number, y: number, name:string) {
+		let me = this;
+		let tileToAdd = name;
 		let tile = me.tiles.create((x * me.tileWidth) + me.tileWidth / 2, 0, tileToAdd);
 		me.game.add.tween(tile).to({ y: y * me.tileHeight + (me.tileHeight / 2) }, 500, Phaser.Easing.Linear.In, true)
 		tile.anchor.setTo(0.5, 0.5);
@@ -310,4 +342,5 @@ Game.prototype = {
 	}
 
 };
-
+game.state.add('Game', Game.prototype);
+game.state.start('Game');
